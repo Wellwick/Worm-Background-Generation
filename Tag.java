@@ -1,26 +1,32 @@
 import java.util.AbstractMap.SimpleEntry;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
-public class Tag implements  {
+public class Tag {
     private String tag;
-    private SimpleEntry<Tag, Float>[] related;
+    private LinkedList<SimpleEntry<Tag, Float>> related;
     private int counter;
     public Tag(String word, int num) {
 	tag = word;
-	related = new SimpleEntry<Tag, Float>[num];
+	related = new LinkedList<SimpleEntry<Tag, Float>>();
 	counter = 0;
     }
     
     public String getTag() { return tag; }
-    public Tag getRelated(int index) { return related[index].getKey(); }
-    public Tag getMostRelated() {
-	int best = -1;
-	for (int i=0; i<counter; i++) {
-	    if (best == -1 || related[best].getValue() < related[i].getValue())
-		best = i;
+    public Tag getRelated(int index) { return related.get(index).getKey(); }
+    public Tag getMostRelated() throws NoRelatedTagException {
+	SimpleEntry<Tag, Float> best = null;
+	ListIterator<SimpleEntry<Tag, Float>> iterator = related.listIterator();
+	while (iterator.hasNext()) {
+	    SimpleEntry<Tag, Float> next = iterator.next();
+	    if (best == null || best.getValue().compareTo(next.getValue()) < 0)
+		best = next;
 	}
-	if (best == -1)
+	//if it wasn't set, throw an exception
+	if (best == null)
 	    throw new NoRelatedTagException();
-	return related[best].getKey();
+	    
+	return best.getKey();
     }
     public boolean equals(Tag t) {
 	return t.getTag().equals(tag);
@@ -28,18 +34,16 @@ public class Tag implements  {
     
     public boolean addRelatedTag(Tag t, Float degree) {
 	//must check that this hasn't already been added, if it has update relation
-	for (int i=0; i<counter; i++) {
-	    if (related[i].getKey().equals(t)) {
-		related[i].setValue(degree);
-		return true; 
+	ListIterator<SimpleEntry<Tag, Float>> iterator = related.listIterator();
+	while (iterator.hasNext()) {
+	    SimpleEntry<Tag, Float> next = iterator.next();
+	    if (next.getKey().equals(t)) {
+		next.setValue(new Float(degree));
+		return true;
 	    }
 	}
 	//need to add to end of list
-	try {
-	    related[counter] = new SimpleEntry(t, degree);
-	} catch (ArrayIndexOutOfBoundsException e) {
-	    System.err.println("Tried to add too many related tags to tag " + tag);
-	}
+	return related.add(new SimpleEntry<Tag, Float>(t, degree));
     }
     
 }
